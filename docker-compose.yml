@@ -1,0 +1,117 @@
+version: '3.7'
+
+services:
+#  nginx:
+#    image: nginx:alpine
+#    container_name: "scanova-staging-nginx"
+#    ports:
+#      - "8000:80"
+##      - "10443:43"
+#    volumes:
+#      - .:/app
+#      - ./configs/docker/nginx:/etc/nginx/conf.d
+##      - ./static_cdn/static_root/:/static
+#    depends_on:
+#      - web
+
+  # Add database to be used by the application
+#  database:
+#    image: mysql:5.7
+#    container_name: 'qcg7_db_mysql'
+#    restart: always
+#    volumes:
+#    - qcg7_db:/var/lib/mysql
+#    environment:
+#      MYSQL_DATABASE: 'scanova_dev'
+#      MYSQL_USER: 'scanova_dev'
+#      MYSQL_PASSWORD: 'scanova_dev'
+#      MYSQL_ROOT_PASSWORD: 'scanova_dev'
+#    ports:
+#    - 3307:3306
+
+  # Add database to be used by the application
+  database:
+    image: mysql:8.0
+    container_name: 'qcg7_db_mysql'
+    restart: always
+    volumes:
+    - qcg7_db:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: 'scanova_dev'
+      MYSQL_USER: 'scanova_dev'
+      MYSQL_PASSWORD: 'scanova_dev'
+      MYSQL_ROOT_PASSWORD: 'scanova_dev'
+    ports:
+    - 3307:3306
+
+  # Add database management application Adminer
+  database-management:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+    depends_on:
+      - database
+
+#  web:
+##    build:
+##      context: .
+##      dockerfile: Dockerfile
+#    image: 881210447458.dkr.ecr.us-west-2.amazonaws.com/qcg-backend:latest
+#    container_name: "scanova-staging-dev"
+#    command: ["./scripts/docker/wait_for_it.sh", "database:3306", "--", "./scripts/docker/docker_start.sh"]
+##    command: ["./scripts/docker/docker_start.sh"]
+#    volumes:
+#      # Make /src directory editable which updates django app when code is changed
+#      - ./src:/app
+#      # Link scripts directory to the container's /code/scripts directory
+#      # This is required to load the entrypoint.sh file by the Dockerfile image
+#      - ./scripts:/app/scripts
+#      # Link config directory to the /code/config directory inside the container.
+#      # This is required to run uwsgi command and run Django server through uwsgi.
+#      - ./configs:/app/configs
+#      # Add documentation directory
+#      - ./docs:/docs
+#    depends_on:
+#      - database
+#    # Environments specific to Dockerfile image. Optional.
+#    environment:
+##      DJANGO_MANAGE_COLLECTSTATIC: 'on'
+##      DJANGO_MANAGE_MIGRATE: 'on'
+#      DEPLOYMENT_MODE: 'production'      # Use for production deployment only
+#    env_file:
+#      - environments/app/development.env
+#    ports:
+#    - 8000:8000
+
+  rabbitmq:
+    image: rabbitmq:latest
+    ports:
+      - "5672:5672"
+
+#  celery:
+#    build: .
+#    working_dir: /app/src
+#    command: celery -A qcg worker -l info
+#    volumes:
+#      - .:/app
+#    depends_on:
+#      - db
+#      - rabbitmq
+#    environment:
+#      - C_FORCE_ROOT=True
+
+#  celery-beat:
+#    build: .
+#    restart: always
+#    working_dir: /app/src
+#    command: celery -A qcg beat -l info --pidfile=/tmp/celeryd.pid  # Fix issue: Pidfile (celerybeat.pid) already exists https://stackoverflow.com/a/55308001/3719167
+#    volumes:
+#      - .:/app
+#    depends_on:
+#      - db
+#      - web
+#      - celery
+
+volumes:
+  qcg7_db:

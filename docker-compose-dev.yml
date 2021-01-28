@@ -1,0 +1,125 @@
+version: '3.7'
+
+services:
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+#      args:
+#        WORKON_HOME: /home/anychat/.venvs
+#        PIPENV_CACHE_DIR: /home/anychat/.pipenv_cache
+    container_name: anychat__dev__app
+    image: anychat-backend-dev
+    command: ["/code/scripts/docker/wait_for_it.sh", "database:3306", "--", "/code/scripts/docker/docker_start.sh"]
+    volumes:
+      # Make /src directory editable which updates django app when code is changed
+      - ./src:/code/app
+      # Link scripts directory to the container's /code/scripts directory
+      # This is required to load the entrypoint.sh file by the Dockerfile image
+      - ./scripts:/code/scripts
+      # Link config directory to the /code/config directory inside the container.
+      # This is required to run uwsgi command and run Django server through uwsgi.
+      #- ./configs:/app/configs
+      # Add documentation directory
+      #- ./docs:/docs
+#      - ./Pipfile:/Pipfile
+#      - ./Pipfile.lock:/Pipfile.lock
+#      - pipenv_venv:/.venvs
+#      - pipenv_cache:/.pipenv_cache
+      - ./requirements.txt:/code/requirements.txt
+    depends_on:
+      - database
+    # Environments specific to Dockerfile image. Optional.
+#    environment:
+#      DJANGO_MANAGE_COLLECTSTATIC: 'on'
+#      DJANGO_MANAGE_MIGRATE: 'on'
+#      DEPLOYMENT_MODE: 'production'      # Use for production deployment only
+    env_file:
+#      - environments/app/development.env
+      - .env
+    environment:
+#      - DATABASE={'ENGINE':'django.db.backends.mysql','NAME':'anychat_dev','USER':'anychat_dev','PASSWORD':'anychat_dev','HOST':'database','PORT':'3306'}
+      - CELERY_BROKER_URL=amqp://rabbitmq
+#      - WORKON_HOME=/.venvs
+#      - PIPENV_CACHE_DIR=/.pipenv_cache
+    ports:
+      - 8000:8000
+    restart: on-failure
+
+  # Add database to be used by the application
+  database:
+    image: mysql:8.0
+    container_name: anychat__dev__database
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    volumes:
+    - anychat_db:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=anychat_dev
+      - MYSQL_DATABASE=anychat_dev
+      - MYSQL_USER=anychat_dev
+      - MYSQL_PASSWORD=anychat_dev
+    ports:
+    - 3306:3306
+
+  # Add database management application Adminer
+#  database-management:
+#    container_name: anychat__dev__database_adminer
+#    image: adminer
+#    restart: always
+#    ports:
+#      - 8080:8080
+#    depends_on:
+#      - database
+
+#  rabbitmq:
+#    image: rabbitmq:3-management
+#    container_name: anychat__dev__rabbitmq
+#    ports:
+#      - 5672:5672
+#      - 15672:15672
+#    restart: on-failure
+#
+#  celery-worker:
+#    container_name: anychat__dev__celery_worker
+#    image: anychat-backend-dev
+#    command: [
+#        "./scripts/docker/wait_for_it.sh",
+#        "rabbitmq:5672",
+#        "--",
+#        "./scripts/docker/celery_start.sh"
+#    ]
+#    depends_on:
+#      - database
+#      - rabbitmq
+#    env_file:
+#      - .env
+#    environment:
+#      - DATABASE={'ENGINE':'django.db.backends.mysql','NAME':'anychat_dev','USER':'anychat_dev','PASSWORD':'anychat_dev','HOST':'database','PORT':'3306'}
+#      - CELERY_BROKER_URL=amqp://rabbitmq
+#    restart: on-failure
+#
+#  celery-beat:
+#    container_name: anychat__dev__celery_beat
+#    image: anychat-backend-dev
+#    command: [
+#        "./scripts/docker/wait_for_it.sh",
+#        "rabbitmq:5672",
+#        "--",
+#        "./scripts/docker/celery_beat_start.sh"
+#    ]
+#    depends_on:
+#      - database
+#      - rabbitmq
+#    env_file:
+#      - .env
+#    environment:
+#      - DATABASE={'ENGINE':'django.db.backends.mysql','NAME':'anychat_dev','USER':'anychat_dev','PASSWORD':'anychat_dev','HOST':'database','PORT':'3306'}
+#      - CELERY_BROKER_URL=amqp://rabbitmq
+#    restart: on-failure
+
+volumes:
+  anychat_db:
+#  pipenv_venv:
+#  pipenv_cache:
