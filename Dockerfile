@@ -1,7 +1,7 @@
 FROM python:3.9.1-slim
 
 # Create a group and user to run our app
-ARG APP_USER=anychat
+ARG APP_USER=app_user
 RUN groupadd -r ${APP_USER} && useradd --no-log-init -r -m -g ${APP_USER} ${APP_USER}
 
 # Install packages needed to run your application (not build deps):
